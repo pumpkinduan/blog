@@ -9,15 +9,18 @@
 #### 同步和异步
 前文已经说了JS的执行是单线程的，也就是同一时刻只能做一件事情，做完当前事情才能继续往下做，放在这里就是说，程序在执行的时候，若是当前在执行ajax，它正在请求网络数据，由于网速原因，请求时间较长，那么程序就会停下来，等待结果返回才会往下执行，这显然不理想，用户可不喜欢等待啊，所以就出现了**异步任务**，刚刚我们说的ajax其实就是**异步任务**，而JS的任务分为**同步与异步**
 
-*同步任务直接在主线程上按照先后次序执行，排队执行，如：页面的初始化渲染，script标签内的JS代码的首次执行......
+*同步任务直接在主线程上按照先后次序执行，排队执行，如：页面的初始化渲染，script标签内的JS代码的首次执行......*
 
 *异步任务则被放入**task queue**（任务队列），ajax网络请求，DOM事件，定时器事件......*
 
 前面说的同步任务与异步任务到底指的是什么呢？
 其实很简单的，从JS代码层面看，**任务就是要执行的代码**
->**在在JS代码中**
->*同步任务指的是script标签内要执行的代码......*
->*异步任务指的是发送网络请求，定时器事件，DOM事件......比较耗时耗力*
+
+**在JS代码中**
+
+*同步任务指的是script标签内要执行的代码......*
+
+*异步任务指的是发送网络请求，定时器事件，DOM事件......比较耗时耗力*
 
 #### 从同步与异步看待Event loop
 Event loop是事件循环，它是JS执行环境所实现的一种机制，当JS执行环境识别出异步任务后，该环境中会有专门的模块去执行该异步任务，只有当异步任务有了结果后，则将其**关联的回调函数放到一个事件处理队列中——Event handler queues（或者说另外一种解释，如下:PS）**，当主线程中的同步任务全部完成后，event loop机制就会将事件处理队列中最先抵达的回调函数推入主线程去执行，上述过程不断循环便构成了**事件循环机制**，由此可见event loop就是用来处理异步任务的，它便是JS异步机制的实现
@@ -62,9 +65,9 @@ setTimeout(() => {
 
 ```
 1. 首先执行script全局代码，获取btn元素
-2. 接着发现给btn绑定了click事件，为异步任务交给JS Runtime处理，它会监听该任务的执行，即为用户是否点击btn按钮元素
+2. 接着发现给btn绑定了click事件，是异步任务，其交给JS Runtime处理，它会监听该任务的执行，即为：用户是否点击btn按钮元素
 3. 接着执行下面代码，循环10亿次，根据电脑配置不同耗费的时间也不同，我测试的时间为4462ms，在这4462ms内主线程一直在忙活（浏览器窗口一直转圈圈），而4462ms内若是你点击了btn元素，则该异步任务有结果了，其回调函数被放入事件处理队列中
-4. 4462ms时间终于到了，主线程闲置了，event loop则将事件处理队列中click事件关联的回调函数推入主线程去执行，打印 4462ms，你会发现并不是说**一触发click事件，它关联的回调函数立马会执行**
+4. 4462ms时间终于到了，打印 4462ms，这时主线程闲置了，event loop则将事件处理队列中click事件关联的回调函数推入主线程去执行，打印 click，你会发现并不是说**一触发click事件，它关联的回调函数立马会执行**
 
 >可能有些小伙伴迷惑了，上面提到的调用栈(call stack)是什么？
 >这里不作过多解释，简单来说说：
@@ -91,6 +94,7 @@ setTimeout(() => {
 >* task（又叫macrotask）
 
 *多个macrotask任务便构成了一个macrotask队列*
+
 *多个microtask任务便构成了一个microtask队列*
 
 >macrotask队列由指定的macrotask sources提供，而任务源非常广泛
@@ -99,18 +103,21 @@ https://html.spec.whatwg.org/multipage/webappapis.html#task-source)
 
 *总结来说：*
 * macrotask任务源：
-   包含整体的JS代码，事件回调(click事件)，XHR回调（ajax的onload），定时器(setTimeout,setInterval,setImmediate),UI render
+   包含整体的JS代码，事件回调(click事件)，XHR回调（ajax的onload），定时器(setTimeout,setInterval,setImmediate)，UI render
+
 **一个event loop有一个或多个macrotask队列**
 
 * microtask任务源：
 process.nextTick,promise.then回调,Object.observe,MutationObserver
-**一个event loop有一个microtask队列**
+
+**一个event loop还有一个microtask队列**
 
 >microtask被推入microtask队列，macrotask被推入macrotask队列
 
 #### 深入event loop循环过程
 现在我们将JS中的异步任务分成了microtask和macrotask，请看下图：
-![a87bb2480ebfd3c2854f088f85d3a3b8.jpeg](../img/event-loop.jpeg)
+
+![a87bb2480ebfd3c2854f088f85d3a3b8.jpeg](../img/event-loop.jpg)
 
 简单总结起来，一次完整的事件循环(event loop)步骤如下：
 
